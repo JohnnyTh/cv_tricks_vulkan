@@ -2,35 +2,84 @@
 
 #include <GLFW/glfw3.h>
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-
-#include <glm/vec4.hpp>
-#include <glm/mat4x4.hpp>
-
 #include <iostream>
+#include <stdexcept>
+#include <cstdlib>
 
-int main() {
-    glfwInit();
+const uint32_t WINDOW_WIDTH = 800;
+const uint32_t WINDOW_HEIGHT = 600;
 
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    GLFWwindow *window = glfwCreateWindow(800, 600, "window", nullptr, nullptr);
+class TriangleApp {
+public:
+    void run() {
+        initVindow();
+        initVulkan();
+        mainLoop();
+        cleanup();
+    };
+private:
+    GLFWwindow *window;
+    VkInstance instance;
 
-    uint32_t extensionCount = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-
-    std::cout << extensionCount << " extensions supported";
-
-    glm::mat4 matrix;
-    glm::vec4 vec;
-
-    auto test = vec * matrix;
-
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
+    void initVindow() {
+        glfwInit();
+        glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+        window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "window", nullptr, nullptr);
     }
 
-    glfwTerminate();
+    void initVulkan() {
+        createInstance();
+    }
 
-    return 0;
+    void mainLoop() {
+        while (!glfwWindowShouldClose(window)) {
+            glfwPollEvents();
+        }
+    }
+
+    void cleanup() {
+        glfwDestroyWindow(window);
+        glfwTerminate();
+    }
+
+    void createInstance() {
+        VkApplicationInfo appInfo{};
+        appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        appInfo.pApplicationName = "basic";
+        appInfo.applicationVersion = VK_MAKE_VERSION(0, 0, 1);
+        appInfo.pEngineName = "no engine";
+        appInfo.engineVersion = VK_MAKE_VERSION(0, 0, 0);
+        appInfo.apiVersion = VK_API_VERSION_1_0;
+
+        VkInstanceCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        createInfo.pApplicationInfo = &appInfo;
+
+        uint32_t glfwExtensionCount = 0;
+        const char **glfwExtensions;
+
+        glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+        createInfo.enabledExtensionCount = glfwExtensionCount;
+        createInfo.ppEnabledExtensionNames = glfwExtensions;
+        createInfo.enabledLayerCount = 0;
+
+
+        if (vkCreateInstance(&createInfo, nullptr, &instance)) {
+            throw std::runtime_error("failed to create instance!");
+        }
+    }
+};
+
+int main() {
+    TriangleApp app;
+    try {
+        app.run();
+    } catch (const std::exception &e) {
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
 }
