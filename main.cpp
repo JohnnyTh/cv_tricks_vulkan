@@ -1,8 +1,8 @@
 #define GLFW_INCLUDE_VULKAN
 
+#include <spdlog/spdlog.h>
 #include <GLFW/glfw3.h>
 
-#include <iostream>
 #include <stdexcept>
 #include <cstdlib>
 #include <vector>
@@ -11,17 +11,16 @@
 const uint32_t WINDOW_WIDTH = 800;
 const uint32_t WINDOW_HEIGHT = 600;
 
-const std::vector<const char *> validationLayers = {"VK_LAYER_KRONOS_validation"};
+const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
 
 #ifdef NDEBUG
-const bool enableValidationLayers = true;
-#pragma message("enableValidationLayers=true")
-#else
 const bool enableValidationLayers = false;
 #pragma message("enableValidationLayers=false")
+#else
+const bool enableValidationLayers = true;
+#pragma message("enableValidationLayers=true")
 #endif
 
-const char *test[] = {"val1", "val2"};
 
 std::string strVecFormat(const std::vector<const char *> &vec) {
     std::string formatted = "{";
@@ -56,6 +55,7 @@ bool checkValidationLayerSupport() {
         }
 
         if (!layerFound) {
+            spdlog::warn("Could not find validation layer: " + std::string(layerName));
             return false;
         }
     }
@@ -99,11 +99,12 @@ private:
     }
 
     void createInstance() {
-        if (enableValidationLayers && !checkValidationLayerSupport()) {
-            throw std::runtime_error("validation layers requested but not available");
-        } else {
-            std::cout << "Validation layers  found: " << strVecFormat(validationLayers);
-        }
+        auto valLayersFmt = strVecFormat(validationLayers);
+        if (enableValidationLayers) {
+            if (!checkValidationLayerSupport()) {
+                throw std::runtime_error("validation layers requested but not available");
+            } else { spdlog::info("Validation layers  found: " + valLayersFmt); }
+        } else { spdlog::info("Skp validation layer check"); }
 
         VkApplicationInfo appInfo{};
         appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -137,9 +138,10 @@ int main() {
     try {
         app.run();
     } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
+        spdlog::error(e.what());
         return EXIT_FAILURE;
     }
 
+    spdlog::info("Exit program");
     return EXIT_SUCCESS;
 }

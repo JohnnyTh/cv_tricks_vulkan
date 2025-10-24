@@ -2,11 +2,17 @@ cmake_minimum_required(VERSION 3.26)
 project(cv_tricks_vulkan)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
+
+set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "-O2 -g")
+
+message(STATUS "CMAKE_CXX_FLAGS_RELEASE=${CMAKE_CXX_FLAGS_RELEASE}")
 
 find_package(Vulkan REQUIRED)
 find_package(glm REQUIRED)
 find_package(glfw3 REQUIRED)
+
+add_subdirectory(external/spdlog)
 
 add_executable(cv_tricks_vulkan
         main.cpp)
@@ -21,4 +27,5 @@ target_link_libraries(
         X11
         Xrandr
         Xi
+        spdlog::spdlog
 )
